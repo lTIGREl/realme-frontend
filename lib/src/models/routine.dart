@@ -8,6 +8,7 @@ class Routine {
   late String main;
   late String complementary;
   late String cardio;
+  String baseUrl = 'http://192.168.1.68:4000/api/rutinas';
   Routine(
       {this.data = const {
         'id': '',
@@ -23,9 +24,7 @@ class Routine {
     cardio = data['cardio']!;
   }
   Future<List<dynamic>> getRoutines(bool needRefresh) async {
-    final url = needRefresh
-        ? Uri.parse('https://realme.up.railway.app/api/rutinas')
-        : Uri.parse('https://realme.up.railway.app/api/rutinas');
+    final url = needRefresh ? Uri.parse(baseUrl) : Uri.parse(baseUrl);
 
     try {
       final response = await http.get(url);
@@ -46,7 +45,7 @@ class Routine {
   }
 
   Future<bool> postRoutines() async {
-    final url = Uri.parse('https://realme.up.railway.app/api/rutinas');
+    final url = Uri.parse(baseUrl);
     final Map<String, dynamic> body = {
       "id": id,
       "day": day,

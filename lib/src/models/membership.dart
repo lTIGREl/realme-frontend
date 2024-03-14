@@ -6,7 +6,7 @@ class Membership {
   String client_id;
   String iDate;
   String fDate;
-
+  String baseUrl = 'http://192.168.1.68:4000/api/membresias';
   Membership(
       {required this.id,
       this.client_id = '',
@@ -14,8 +14,7 @@ class Membership {
       this.fDate = ''});
 
   Future<List<dynamic>?> getMembership() async {
-    final url =
-        Uri.parse('https://realme.up.railway.app/api/membresias/client_id/$id');
+    final url = Uri.parse('$baseUrl/client_id/$id');
     try {
       final response = await http.get(url);
 
@@ -35,7 +34,7 @@ class Membership {
   }
 
   Future<bool> postMembership() async {
-    final url = Uri.parse('https://realme.up.railway.app/api/membresias');
+    final url = Uri.parse(baseUrl);
     final Map<String, dynamic> body = {
       "id": id,
       "client_id": client_id,
@@ -63,7 +62,7 @@ class Membership {
   }
 
   Future<bool> deleteMembership(String column, String value) async {
-    final url = Uri.parse('https://realme.up.railway.app/api/membresias');
+    final url = Uri.parse(baseUrl);
     final Map<String, dynamic> body = {"column": column, "value": value};
     try {
       final response = await http.put(

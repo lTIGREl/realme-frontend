@@ -25,16 +25,16 @@ class RoutinePageBase extends StatelessWidget {
         } else if (snapshot.hasError) {
           return Text('Error: ${snapshot.error}');
         } else {
-          List<Map<String, String>> datos = (snapshot.data! as List)
-              .map((item) => (item as Map<String, dynamic>).map(
-                  (key, value) => MapEntry(key.toString(), value.toString())))
-              .toList();
+          // List<Map<String, String>> datos = (snapshot.data! as List)
+          //     .map((item) => (item as Map<String, dynamic>).map(
+          //         (key, value) => MapEntry(key.toString(), value.toString())))
+          //     .toList();
 
-          Routine routineMond = Routine(data: datos[0]);
-          Routine routineTue = Routine(data: datos[1]);
-          Routine routineWed = Routine(data: datos[2]);
-          Routine routineThu = Routine(data: datos[3]);
-          Routine routineFri = Routine(data: datos[4]);
+          Routine routineMond = Routine(data: snapshot.data![0]);
+          Routine routineTue = Routine(data: snapshot.data![1]);
+          Routine routineWed = Routine(data: snapshot.data![2]);
+          Routine routineThu = Routine(data: snapshot.data![3]);
+          Routine routineFri = Routine(data: snapshot.data![4]);
           return Slideshow(
               bulletPrimario: 17,
               bulletSecundario: 10,
@@ -89,7 +89,7 @@ class DailyCard extends StatelessWidget {
                 width: widthPic,
               ),
             ),
-            Text(routine.day, style: TextStyle(fontSize: 50)),
+            Text(routineDay(routine.day), style: TextStyle(fontSize: 50)),
             Text(routine.main),
             (routine.complementary.isNotEmpty)
                 ? Text(routine.complementary)
@@ -193,5 +193,22 @@ class DailyCard extends StatelessWidget {
         );
       },
     );
+  }
+
+  String routineDay(String day) {
+    switch (day) {
+      case 'Monday':
+        return 'Lunes';
+      case 'Tuesday':
+        return 'Martes';
+      case 'Wednesday':
+        return 'Miércoles';
+      case 'Thursday':
+        return 'Jueves';
+      case 'Friday':
+        return 'Viernes';
+      default:
+        return '';
+    }
   }
 }

@@ -7,6 +7,8 @@ class Client {
   late String name;
   late String ic;
   late String BDate;
+  String baseUrl = 'http://192.168.1.68:4000/api/clientes';
+  //'https://realme.up.railway.app/api/clientes';
 
   Client(
       {this.id = '',
@@ -19,9 +21,8 @@ class Client {
 
   Future<List<dynamic>> getClients(
       bool needSearch, String column, String value) async {
-    final url = needSearch
-        ? Uri.parse('https://realme.up.railway.app/api/clientes/$column/$value')
-        : Uri.parse('https://realme.up.railway.app/api/clientes');
+    final url =
+        needSearch ? Uri.parse('$baseUrl/$column/$value') : Uri.parse(baseUrl);
     try {
       final response = await http.get(url);
 
@@ -41,7 +42,7 @@ class Client {
   }
 
   Future<bool> postClient() async {
-    final url = Uri.parse('https://realme.up.railway.app/api/clientes');
+    final url = Uri.parse(baseUrl);
     final Map<String, dynamic> body = {
       "id": id,
       "name": name,
@@ -69,7 +70,7 @@ class Client {
   }
 
   Future<bool> deleteClient(String column, String value) async {
-    final url = Uri.parse('https://realme.up.railway.app/api/clientes');
+    final url = Uri.parse(baseUrl);
     final Map<String, dynamic> body = {"column": column, "value": value};
     try {
       final response = await http.put(

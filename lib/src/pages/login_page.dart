@@ -1,4 +1,4 @@
-// ignore_for_file: prefer_const_constructors
+// ignore_for_file: prefer_const_constructors, use_key_in_widget_constructors, prefer_final_fields
 
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -80,6 +80,7 @@ class _BotonLogin extends StatelessWidget {
             formKey.currentState!.save();
             LogIn login = LogIn(_uNameCtrl.text, _pwdCtrl.text);
             bool isValid = await login.enviarSolicitudLogin();
+            print(isValid);
             if (isValid) {
               Navigator.push(context,
                   MaterialPageRoute(builder: (context) => MainMenuPage()));
