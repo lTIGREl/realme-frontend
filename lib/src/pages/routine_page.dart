@@ -19,43 +19,25 @@ class RoutinePageBase extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return FutureBuilder(
-      builder: (BuildContext context, AsyncSnapshot<List<dynamic>> snapshot) {
+      builder: (BuildContext context,
+          AsyncSnapshot<List<Map<String, String>>> snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return CircularProgressIndicator();
         } else if (snapshot.hasError) {
           return Text('Error: ${snapshot.error}');
         } else {
-          // List<Map<String, String>> datos = (snapshot.data! as List)
-          //     .map((item) => (item as Map<String, dynamic>).map(
-          //         (key, value) => MapEntry(key.toString(), value.toString())))
-          //     .toList();
-
-          Routine routineMond = Routine(data: snapshot.data![0]);
-          Routine routineTue = Routine(data: snapshot.data![1]);
-          Routine routineWed = Routine(data: snapshot.data![2]);
-          Routine routineThu = Routine(data: snapshot.data![3]);
-          Routine routineFri = Routine(data: snapshot.data![4]);
+          var datos = snapshot.data!;
+          List<Routine> routines =
+              datos.map((item) => Routine(data: item)).toList();
+          List<DailyCard> dailyCards = routines
+              .map((routine) => DailyCard(
+                  routine: routine, svgpicture: 'assets/${routine.day}.svg'))
+              .toList();
           return Slideshow(
               bulletPrimario: 17,
               bulletSecundario: 10,
               puntosArriba: true,
-              slides: [
-                DailyCard(
-                  svgpicture: 'assets/monday.svg',
-                  routine: routineMond,
-                ),
-                DailyCard(
-                    svgpicture: 'assets/tuesday.svg',
-                    routine: routineTue,
-                    widthPic: 200),
-                DailyCard(
-                    svgpicture: 'assets/wednesday.svg', routine: routineWed),
-                DailyCard(
-                    svgpicture: 'assets/thursday.svg',
-                    routine: routineThu,
-                    widthPic: 200),
-                DailyCard(svgpicture: 'assets/friday.svg', routine: routineFri),
-              ]);
+              slides: dailyCards);
         }
       },
       future: Provider.of<RoutineProvider>(context).getRoutine(),
@@ -109,23 +91,6 @@ class DailyCard extends StatelessWidget {
         ),
       ),
     );
-  }
-
-  String translateDay(String day) {
-    switch (day) {
-      case 'Lunes':
-        return 'Monday';
-      case 'Martes':
-        return 'Tuesday';
-      case 'Miércoles':
-        return 'Wednesday';
-      case 'Jueves':
-        return 'Thursday';
-      case 'Viernes':
-        return 'Friday';
-      default:
-        return '';
-    }
   }
 
   void openDialog(BuildContext context) {

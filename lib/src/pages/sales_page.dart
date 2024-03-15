@@ -5,6 +5,7 @@ import 'package:intl/date_symbol_data_local.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:real_me_fitness_center/src/providers/sales_add.dart';
+import 'package:real_me_fitness_center/src/sharedPrefs/loginToken.dart';
 
 import '../widgets/radial_progress.dart';
 
@@ -54,9 +55,10 @@ class _SalesPageState extends State<SalesPage> {
     ));
   }
 
-  _detailsButton() {
-    _pageController.animateToPage(2,
-        duration: Duration(milliseconds: 200), curve: Curves.ease);
+  _detailsButton() async {
+    await LoginToken.removeToken();
+    // _pageController.animateToPage(2,
+    //     duration: Duration(milliseconds: 200), curve: Curves.ease);
   }
 
   _newSaleButton() {

@@ -23,7 +23,7 @@ class Routine {
     complementary = data['complementary']!;
     cardio = data['cardio']!;
   }
-  Future<List<dynamic>> getRoutines(bool needRefresh) async {
+  Future<List<Map<String, String>>> getRoutines(bool needRefresh) async {
     final url = needRefresh ? Uri.parse(baseUrl) : Uri.parse(baseUrl);
 
     try {
@@ -32,7 +32,11 @@ class Routine {
       if (response.statusCode == 200) {
         final Map<String, dynamic> body = jsonDecode(response.body);
         final List<dynamic> rutinas = body['body'];
-        return rutinas;
+        List<Map<String, String>> datos = (rutinas)
+            .map((item) => (item as Map<String, dynamic>).map(
+                (key, value) => MapEntry(key.toString(), value.toString())))
+            .toList();
+        return datos;
       } else {
         print('Error: ${response.statusCode}');
         print('Mensaje de error: ${response.body}');

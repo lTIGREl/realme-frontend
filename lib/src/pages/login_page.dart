@@ -4,24 +4,35 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:real_me_fitness_center/src/models/login.dart';
 import 'package:real_me_fitness_center/src/pages/main_menu_page.dart';
+import 'package:real_me_fitness_center/src/sharedPrefs/loginToken.dart';
 
 class LogInPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-        body: Center(
-      child: SafeArea(
-        child: SingleChildScrollView(
-          child: Column(
-            children: [
-              SizedBox(width: double.infinity),
-              _HeaderLogin(),
-              _UserLoginForm()
-            ],
-          ),
-        ),
-      ),
-    ));
+    return FutureBuilder(
+        future: LoginToken.verifyToken(),
+        builder: (BuildContext context, AsyncSnapshot<bool> snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return CircularProgressIndicator();
+          } else if (snapshot.hasData && snapshot.data == true) {
+            return MainMenuPage();
+          } else {
+            return Scaffold(
+                body: Center(
+              child: SafeArea(
+                child: SingleChildScrollView(
+                  child: Column(
+                    children: [
+                      SizedBox(width: double.infinity),
+                      _HeaderLogin(),
+                      _UserLoginForm()
+                    ],
+                  ),
+                ),
+              ),
+            ));
+          }
+        });
   }
 }
 
@@ -79,9 +90,9 @@ class _BotonLogin extends StatelessWidget {
           if (formKey.currentState!.validate()) {
             formKey.currentState!.save();
             LogIn login = LogIn(_uNameCtrl.text, _pwdCtrl.text);
-            bool isValid = await login.enviarSolicitudLogin();
-            print(isValid);
-            if (isValid) {
+            String token = await login.enviarSolicitudLogin();
+            if (token.length > 0) {
+              await LoginToken.setToken(token);
               Navigator.push(context,
                   MaterialPageRoute(builder: (context) => MainMenuPage()));
             }

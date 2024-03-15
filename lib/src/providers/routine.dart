@@ -31,14 +31,11 @@ class RoutineProvider with ChangeNotifier {
     }
   }
 
-  Future<List<dynamic>> getRoutine() async {
+  Future<List<Map<String, String>>> getRoutine() async {
     needRefresh = false;
     Routine routine = Routine();
-    List<dynamic> result = await routine.getRoutines(needRefresh);
-    List<Map<String, String>> datos = (result as List)
-        .map((item) => (item as Map<String, dynamic>)
-            .map((key, value) => MapEntry(key.toString(), value.toString())))
-        .toList();
-    return datos;
+    List<Map<String, String>> result = await routine.getRoutines(needRefresh);
+
+    return result;
   }
 }
