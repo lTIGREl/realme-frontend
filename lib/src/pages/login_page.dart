@@ -13,7 +13,7 @@ class LogInPage extends StatelessWidget {
         future: LoginToken.verifyToken(),
         builder: (BuildContext context, AsyncSnapshot<bool> snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return CircularProgressIndicator();
+            return Scaffold(body: Center(child: CircularProgressIndicator()));
           } else if (snapshot.hasData && snapshot.data == true) {
             return MainMenuPage();
           } else {

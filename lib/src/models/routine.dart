@@ -1,6 +1,8 @@
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
+import 'package:real_me_fitness_center/src/configs/api.dart';
+
 class Routine {
   Map<String, String> data;
   late String id;
@@ -8,7 +10,7 @@ class Routine {
   late String main;
   late String complementary;
   late String cardio;
-  String baseUrl = 'http://192.168.1.68:4000/api/rutinas';
+  String baseUrl = '${ApiConfig().baseUrl}rutinas';
   Routine(
       {this.data = const {
         'id': '',

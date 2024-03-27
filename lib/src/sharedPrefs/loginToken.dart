@@ -1,3 +1,4 @@
+import 'package:real_me_fitness_center/src/configs/api.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 
@@ -20,7 +21,8 @@ class LoginToken {
   }
 
   static Future<bool> verifyToken() async {
-    final Uri url = Uri.parse('http://192.168.1.68:4000/api/auth/verifyJWT');
+    String baseUrl = ApiConfig().baseUrl;
+    final Uri url = Uri.parse('${baseUrl}auth/verifyJWT');
     String? token = await getToken();
     final Map<String, String> body = {'token': token!};
     if (token != null) {

@@ -1,13 +1,15 @@
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
+import 'package:real_me_fitness_center/src/configs/api.dart';
+
 class Client {
   Map<String, String> data;
   late String id;
   late String name;
   late String ic;
   late String BDate;
-  String baseUrl = 'http://192.168.1.68:4000/api/clientes';
+  String baseUrl = '${ApiConfig().baseUrl}clientes';
   //'https://realme.up.railway.app/api/clientes';
 
   Client(

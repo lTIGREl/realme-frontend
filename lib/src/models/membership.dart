@@ -1,12 +1,14 @@
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
+import 'package:real_me_fitness_center/src/configs/api.dart';
+
 class Membership {
   String id;
   String client_id;
   String iDate;
   String fDate;
-  String baseUrl = 'http://192.168.1.68:4000/api/membresias';
+  String baseUrl = '${ApiConfig().baseUrl}membresias';
   Membership(
       {required this.id,
       this.client_id = '',

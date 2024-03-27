@@ -1,11 +1,12 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:real_me_fitness_center/src/configs/api.dart';
 
 class LogIn {
   LogIn(this.user, this.password);
   String user;
   String password;
-  String baseUrl = 'http://192.168.1.68:4000/api/auth/login';
+  String baseUrl = '${ApiConfig().baseUrl}auth/login';
   //'https://realme.up.railway.app/api/auth/login';
 
   Future<String> enviarSolicitudLogin() async {
