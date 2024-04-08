@@ -4,8 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import 'package:real_me_fitness_center/src/models/client.dart';
 import 'package:real_me_fitness_center/src/providers/sales_add.dart';
-import 'package:real_me_fitness_center/src/sharedPrefs/loginToken.dart';
 
 import '../widgets/radial_progress.dart';
 
@@ -55,10 +55,9 @@ class _SalesPageState extends State<SalesPage> {
     ));
   }
 
-  _detailsButton() async {
-    await LoginToken.removeToken();
-    // _pageController.animateToPage(2,
-    //     duration: Duration(milliseconds: 200), curve: Curves.ease);
+  _detailsButton() {
+    _pageController.animateToPage(2,
+        duration: Duration(milliseconds: 200), curve: Curves.ease);
   }
 
   _newSaleButton() {
@@ -82,6 +81,8 @@ class _SalesPageState extends State<SalesPage> {
 }
 
 class _NewSale extends StatelessWidget {
+  TextEditingController _clientController = TextEditingController();
+  TextEditingController _debtController = TextEditingController();
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -102,15 +103,69 @@ class _NewSale extends StatelessWidget {
               label: 'Pago',
               isProduct: false,
               items: ['Efectivo', 'App', 'Fiado']),
-          _CustomerData(),
-          ElevatedButton(onPressed: () {}, child: Text('Registrar'))
+          _CustomerData(_clientController),
+          _DebtData(_debtController),
+          _SendButton(
+              clientController: _clientController,
+              debtController: _debtController)
         ],
       ),
     );
   }
 }
 
+class _SendButton extends StatelessWidget {
+  const _SendButton({
+    required TextEditingController clientController,
+    required TextEditingController debtController,
+  })  : _clientController = clientController,
+        _debtController = debtController;
+
+  final TextEditingController _clientController;
+  final TextEditingController _debtController;
+
+  @override
+  Widget build(BuildContext context) {
+    return ElevatedButton(
+        onPressed: () {
+          print(_clientController.text);
+          print(_debtController.text);
+        },
+        child: Text('Registrar'));
+  }
+}
+
+class _DebtData extends StatelessWidget {
+  _DebtData(this._debtController);
+  TextEditingController _debtController;
+  @override
+  Widget build(BuildContext context) {
+    _debtController.text = '0';
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text('Deuda'),
+        SizedBox(
+          width: 150,
+          height: 75,
+          child: TextField(
+            controller: _debtController,
+            keyboardType: TextInputType.number,
+            decoration: InputDecoration(
+              border: OutlineInputBorder(),
+              hintText: 'Deuda',
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 class _CustomerData extends StatelessWidget {
+  _CustomerData(this._clientController);
+  TextEditingController _clientController;
+  Client client = Client();
   @override
   Widget build(BuildContext context) {
     return Row(
@@ -120,10 +175,58 @@ class _CustomerData extends StatelessWidget {
         SizedBox(
           width: 150,
           height: 75,
-          child: TextField(
-            onChanged: (value) {},
-            decoration: InputDecoration(border: OutlineInputBorder()),
-          ),
+          child: FutureBuilder(
+              future: client.getClients(false, '', ''),
+              builder: (BuildContext context,
+                  AsyncSnapshot<List<dynamic>> snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return Center(child: CircularProgressIndicator());
+                } else if (snapshot.hasError) {
+                  return Text('Error: ${snapshot.error}');
+                } else {
+                  List<Map<String, String>> datos = (snapshot.data!)
+                      .map((item) => (item as Map<String, dynamic>).map(
+                          (key, value) =>
+                              MapEntry(key.toString(), value.toString())))
+                      .toList();
+                  List<String> names =
+                      datos.map((item) => item['name'] as String).toList();
+                  return Autocomplete<String>(
+                    optionsBuilder: (TextEditingValue textEditingValue) {
+                      if (textEditingValue.text == '') {
+                        return const Iterable<String>.empty();
+                      }
+                      return names.where((String option) {
+                        return option.contains(textEditingValue.text);
+                      });
+                    },
+                    onSelected: (String selection) {
+                      _clientController.text = selection;
+                    },
+                    fieldViewBuilder: (BuildContext context,
+                        TextEditingController textEditingController,
+                        FocusNode focusNode,
+                        VoidCallback onFieldSubmitted) {
+                      _clientController.value = textEditingController.value;
+                      return TextField(
+                        textCapitalization: TextCapitalization.words,
+                        controller: textEditingController,
+                        focusNode: focusNode,
+                        onSubmitted: (String value) {
+                          onFieldSubmitted();
+                        },
+                        style: TextStyle(
+                          fontSize: 16.0,
+                        ),
+                        decoration: InputDecoration(
+                          border: OutlineInputBorder(),
+                          hintText: 'Nombre',
+                        ),
+                      );
+                    },
+                  );
+                }
+              }),
         ),
       ],
     );
