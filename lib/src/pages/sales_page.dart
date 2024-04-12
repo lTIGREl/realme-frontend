@@ -1,10 +1,12 @@
-// ignore_for_file: prefer_const_constructors, sort_child_properties_last, prefer_const_literals_to_create_immutables, prefer_const_constructors_in_immutables
+// ignore_for_file: prefer_const_constructors, sort_child_properties_last, prefer_const_literals_to_create_immutables, prefer_const_constructors_in_immutables, use_build_context_synchronously
 
 import 'package:flutter/material.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:real_me_fitness_center/src/models/client.dart';
+import 'package:real_me_fitness_center/src/models/product.dart';
+import 'package:real_me_fitness_center/src/models/sale.dart';
 import 'package:real_me_fitness_center/src/providers/sales_add.dart';
 
 import '../widgets/radial_progress.dart';
@@ -81,8 +83,11 @@ class _SalesPageState extends State<SalesPage> {
 }
 
 class _NewSale extends StatelessWidget {
-  TextEditingController _clientController = TextEditingController();
-  TextEditingController _debtController = TextEditingController();
+  final TextEditingController _qtyController = TextEditingController();
+  final TextEditingController _productController = TextEditingController();
+  final TextEditingController _payController = TextEditingController();
+  final TextEditingController _clientController = TextEditingController();
+  final TextEditingController _debtController = TextEditingController();
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -90,24 +95,21 @@ class _NewSale extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
-          _QuantityControl(),
-          _DropDownButton(label: 'Producto', isProduct: true, items: [
-            'Diario',
-            'Proteina',
-            'Agua pequeña',
-            'Agua grande',
-            'Pre-entreno',
-            'Mensualidad'
-          ]),
+          _QuantityControl(_qtyController),
           _DropDownButton(
-              label: 'Pago',
-              isProduct: false,
-              items: ['Efectivo', 'App', 'Fiado']),
+              label: 'Producto',
+              isProduct: true,
+              controller: _productController),
+          _DropDownButton(
+              label: 'Pago', isProduct: false, controller: _payController),
           _CustomerData(_clientController),
           _DebtData(_debtController),
           _SendButton(
               clientController: _clientController,
-              debtController: _debtController)
+              debtController: _debtController,
+              qtyController: _qtyController,
+              productController: _productController,
+              payController: _payController)
         ],
       ),
     );
@@ -118,18 +120,38 @@ class _SendButton extends StatelessWidget {
   const _SendButton({
     required TextEditingController clientController,
     required TextEditingController debtController,
+    required TextEditingController qtyController,
+    required TextEditingController productController,
+    required TextEditingController payController,
   })  : _clientController = clientController,
+        _qtyController = qtyController,
+        _productController = productController,
+        _payController = payController,
         _debtController = debtController;
 
   final TextEditingController _clientController;
   final TextEditingController _debtController;
+  final TextEditingController _qtyController;
+  final TextEditingController _productController;
+  final TextEditingController _payController;
 
   @override
   Widget build(BuildContext context) {
     return ElevatedButton(
-        onPressed: () {
-          print(_clientController.text);
-          print(_debtController.text);
+        onPressed: () async {
+          Sale sale = Sale();
+          bool isCorrect = await sale.postSale(
+              _qtyController.text,
+              _productController.text,
+              _payController.text,
+              _clientController.text,
+              _debtController.text);
+          isCorrect
+              ? {
+                  Navigator.pushReplacement(context,
+                      MaterialPageRoute(builder: (context) => SalesPage()))
+                }
+              : null;
         },
         child: Text('Registrar'));
   }
@@ -233,7 +255,20 @@ class _CustomerData extends StatelessWidget {
   }
 }
 
-class _QuantityControl extends StatelessWidget {
+class _QuantityControl extends StatefulWidget {
+  _QuantityControl(this._qtyController);
+  TextEditingController _qtyController;
+
+  @override
+  State<_QuantityControl> createState() => _QuantityControlState();
+}
+
+class _QuantityControlState extends State<_QuantityControl> {
+  @override
+  void initState() {
+    widget._qtyController.text = '1';
+  }
+
   @override
   Widget build(BuildContext context) {
     final model = Provider.of<SelectedItemSale>(context);
@@ -245,13 +280,21 @@ class _QuantityControl extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             IconButton(
-                onPressed: () => model.quantity--, icon: Icon(Icons.remove)),
+                onPressed: () {
+                  model.quantity--;
+                  widget._qtyController.text = model.quantity.toString();
+                },
+                icon: Icon(Icons.remove)),
             Container(
                 alignment: Alignment.center,
                 width: 50,
                 child: Text(model.quantity.toString())),
             IconButton(
-                onPressed: () => model.quantity++, icon: Icon(Icons.add)),
+                onPressed: () {
+                  model.quantity++;
+                  widget._qtyController.text = model.quantity.toString();
+                },
+                icon: Icon(Icons.add)),
           ],
         ),
       ],
@@ -261,31 +304,102 @@ class _QuantityControl extends StatelessWidget {
 
 class _DropDownButton extends StatelessWidget {
   final bool isProduct;
-  final List<String> items;
   final String label;
+  final TextEditingController controller;
 
   const _DropDownButton(
-      {required this.items, required this.isProduct, required this.label});
+      {required this.isProduct, required this.label, required this.controller});
+  @override
+  Widget build(BuildContext context) {
+    Product product = Product();
+    return isProduct
+        ? FutureBuilder(
+            future:
+                product.getProducts(), // Función que retorna un Future<String>
+            builder:
+                (BuildContext context, AsyncSnapshot<List<dynamic>> snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return CircularProgressIndicator(); // Muestra un indicador de carga mientras se espera la respuesta
+              } else if (snapshot.hasError) {
+                return Text(
+                    'Error: ${snapshot.error}'); // Muestra un mensaje de error si hay algún error
+              } else {
+                List<Map<String, String>> datos = (snapshot.data!)
+                    .map((item) => (item as Map<String, dynamic>).map(
+                        (key, value) =>
+                            MapEntry(key.toString(), value.toString())))
+                    .toList();
+                List<String> names =
+                    datos.map((item) => item['name'] as String).toList();
+                List<String> ids =
+                    datos.map((item) => item['id'] as String).toList();
+                return _DropMenu(
+                    ids: ids,
+                    controller: controller,
+                    label: label,
+                    isProduct: isProduct,
+                    items: names);
+              }
+            },
+          )
+        : _DropMenu(
+            ids: [],
+            controller: controller,
+            label: label,
+            isProduct: isProduct,
+            items: ['Efectivo', 'App', 'Fiado']);
+  }
+}
+
+class _DropMenu extends StatefulWidget {
+  const _DropMenu({
+    required this.controller,
+    required this.ids,
+    required this.label,
+    required this.isProduct,
+    required this.items,
+  });
+
+  final String label;
+  final List<String> ids;
+  final bool isProduct;
+  final List<String> items;
+  final TextEditingController controller;
+
+  @override
+  State<_DropMenu> createState() => _DropMenuState();
+}
+
+class _DropMenuState extends State<_DropMenu> {
+  @override
+  void initState() {
+    widget.controller.text =
+        widget.isProduct ? widget.ids[0] : translateMethod(widget.items[0]);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(label),
+        Text(widget.label),
         Consumer<SelectedItemSale>(
           builder: (context, model, child) {
             return DropdownButton<String>(
               borderRadius: BorderRadius.all(Radius.circular(30)),
-              value: isProduct ? model.product : model.mode,
+              value: widget.isProduct ? model.product : model.mode,
               hint: Text('Elige un producto'),
               onChanged: (String? newValue) {
-                if (isProduct) {
+                if (widget.isProduct) {
                   model.product = newValue!;
+                  widget.controller.text =
+                      widget.ids[widget.items.indexOf(model.product)];
                 } else {
                   model.mode = newValue!;
+                  widget.controller.text = translateMethod(model.mode);
                 }
               },
-              items: items.map<DropdownMenuItem<String>>((String value) {
+              items: widget.items.map<DropdownMenuItem<String>>((String value) {
                 return DropdownMenuItem<String>(
                   value: value,
                   child: Text(value),
@@ -296,6 +410,19 @@ class _DropDownButton extends StatelessWidget {
         ),
       ],
     );
+  }
+
+  String translateMethod(String method) {
+    switch (method) {
+      case 'Efectivo':
+        return 'cash';
+      case 'App':
+        return 'transfer';
+      case 'Fiado':
+        return 'credit';
+      default:
+        return 'cash';
+    }
   }
 }
 

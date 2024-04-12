@@ -4,7 +4,7 @@ class SelectedItemSale with ChangeNotifier {
   String _product = 'Diario';
   String _mode = 'Efectivo';
   int _quantity = 1;
-  int _costumer = 0000000000;
+  String _costumer = '';
 
   String get mode => _mode;
 
@@ -13,8 +13,8 @@ class SelectedItemSale with ChangeNotifier {
     notifyListeners();
   }
 
-  int get costumer => _costumer;
-  set costumer(int costumer) {
+  String get costumer => _costumer;
+  set costumer(String costumer) {
     _costumer = costumer;
     notifyListeners();
   }
