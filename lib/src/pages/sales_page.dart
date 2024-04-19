@@ -146,12 +146,7 @@ class _SendButton extends StatelessWidget {
               _payController.text,
               _clientController.text,
               _debtController.text);
-          isCorrect
-              ? {
-                  Navigator.pushReplacement(context,
-                      MaterialPageRoute(builder: (context) => SalesPage()))
-                }
-              : null;
+          isCorrect ? {} : null;
         },
         child: Text('Registrar'));
   }
@@ -314,8 +309,8 @@ class _DropDownButton extends StatelessWidget {
     Product product = Product();
     return isProduct
         ? FutureBuilder(
-            future:
-                product.getProducts(), // Función que retorna un Future<String>
+            future: product.getProducts(
+                false, ''), // Función que retorna un Future<String>
             builder:
                 (BuildContext context, AsyncSnapshot<List<dynamic>> snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
@@ -443,52 +438,160 @@ class _SalesDetails extends StatelessWidget {
 }
 
 class _SliverBody extends StatelessWidget {
+  Sale sale = Sale();
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 600,
-      child: ListView.builder(
-        itemCount: 30,
-        itemBuilder: (context, index) {
-          return Card(
-            shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.all(Radius.circular(20))),
-            child: Container(
-              padding: EdgeInsets.symmetric(horizontal: 16),
-              height: 75,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text('2'),
-                  Text('Proteína'),
-                  Text('5\$'),
-                  Text('Efectivo'),
-                ],
-              ),
-            ),
-            elevation: 0,
-          );
-        },
-      ),
+        height: 600,
+        child: FutureBuilder(
+          future: sale.getSales(),
+          builder:
+              (BuildContext context, AsyncSnapshot<List<dynamic>> snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return CircularProgressIndicator();
+            } else if (snapshot.hasError) {
+              return Text('Error: ${snapshot.error}');
+            } else {
+              List<Map<String, String>> datos = (snapshot.data!)
+                  .map((item) => (item as Map<String, dynamic>).map(
+                      (key, value) =>
+                          MapEntry(key.toString(), value.toString())))
+                  .toList();
+              return Details(
+                data: datos,
+                sale: sale,
+              );
+            }
+          },
+        ));
+  }
+}
+
+class Details extends StatelessWidget {
+  const Details({
+    Key? key,
+    required this.data,
+    required this.sale,
+  }) : super(key: key);
+
+  final List<Map<String, String>> data;
+  final Sale sale;
+
+  @override
+  Widget build(BuildContext context) {
+    final width = MediaQuery.of(context).size.width;
+    final height = MediaQuery.of(context).size.height;
+    Product product = Product();
+    return FutureBuilder(
+      future: product.getProducts(false, ''),
+      builder: (BuildContext context, AsyncSnapshot<List<dynamic>> snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Center(child: CircularProgressIndicator());
+        } else if (snapshot.hasError) {
+          return Center(child: Text('Error al cargar datos'));
+        } else {
+          List<Map<String, String>> products = (snapshot.data!)
+              .map((item) => (item as Map<String, dynamic>).map(
+                  (key, value) => MapEntry(key.toString(), value.toString())))
+              .toList();
+          return ListView.builder(
+              itemCount: data.length,
+              itemBuilder: (context, index) {
+                List<String> details = sale.getDetails(products,
+                    data[index]['product_id']!, data[index]['quantity']!);
+                return Card(
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.all(Radius.circular(20))),
+                  child: Container(
+                    padding: EdgeInsets.symmetric(horizontal: 16),
+                    height: 75,
+                    child: SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        children: [
+                          Container(
+                              alignment: Alignment.center,
+                              child: Text(data[index]['quantity']!),
+                              width: width * 0.05),
+                          Container(
+                              alignment: Alignment.center,
+                              child: Text(details[0]),
+                              width: width * 0.25),
+                          Container(
+                              alignment: Alignment.center,
+                              child:
+                                  Text(translateMethod(data[index]['method']!)),
+                              width: width * 0.2),
+                          Container(
+                              alignment: Alignment.center,
+                              child: Text(details[1]),
+                              width: width * 0.125),
+                          Container(
+                              alignment: Alignment.center,
+                              child: Text(data[index]['client_name']!),
+                              width: width * 0.25),
+                          Container(
+                              alignment: Alignment.center,
+                              child: Text(data[index]['debt']!),
+                              width: width * 0.125)
+                        ],
+                      ),
+                    ),
+                  ),
+                  elevation: 0,
+                );
+              });
+        }
+      },
     );
+  }
+
+  String translateMethod(String method) {
+    switch (method) {
+      case 'cash':
+        return 'Efectivo';
+      case 'transfer':
+        return 'App';
+      case 'credit':
+        return 'Fiado';
+      default:
+        return 'Efectivo';
+    }
   }
 }
 
 class _SliverHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    final width = MediaQuery.of(context).size.width;
+    final height = MediaQuery.of(context).size.height;
     return Card(
       shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.all(Radius.circular(20))),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16),
         child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text('#'),
-            Text('Detalle'),
-            Text('Total'),
-            Text('Pago'),
+            Container(
+                width: width * 0.05,
+                alignment: Alignment.center,
+                child: Text('#')),
+            Container(
+                width: width * 0.25,
+                alignment: Alignment.center,
+                child: Text('Detalle')),
+            Container(
+                width: width * 0.2,
+                alignment: Alignment.center,
+                child: Text('Pago')),
+            Container(
+                width: width * 0.125,
+                alignment: Alignment.center,
+                child: Text('Total')),
+            Container(
+                width: width * 0.25,
+                alignment: Alignment.center,
+                child: Text('Cliente'))
           ],
         ),
       ),

@@ -5,8 +5,8 @@ import 'dart:convert';
 class Product {
   String baseUrl = '${ApiConfig().baseUrl}productos';
   //'https://realme.up.railway.app/api/clientes';
-  Future<List<dynamic>> getProducts() async {
-    final url = Uri.parse(baseUrl);
+  Future<List<dynamic>> getProducts(bool needSearch, String id) async {
+    final url = needSearch ? Uri.parse('$baseUrl/$id') : Uri.parse(baseUrl);
     try {
       final response = await http.get(url);
 
