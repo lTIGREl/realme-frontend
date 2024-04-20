@@ -6,7 +6,7 @@ class SearchOption with ChangeNotifier {
   String _column = '';
   String _value = '';
   bool _needSearch = false;
-  String baseUrl = 'http://192.168.1.68:4000';
+  String baseUrl = 'http://192.168.0.104:4000';
   //'https://realme.up.railway.app';
   late IO.Socket socket;
   SearchOption() {

@@ -1,5 +1,4 @@
 import 'dart:convert';
-
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 import 'package:real_me_fitness_center/src/configs/api.dart';
@@ -7,8 +6,8 @@ import 'package:real_me_fitness_center/src/models/product.dart';
 
 class Sale {
   final String _baseUrl = '${ApiConfig().baseUrl}compras';
-  Future<List<dynamic>> getSales() async {
-    final url = Uri.parse(_baseUrl);
+  Future<List<dynamic>> getSales(String date) async {
+    final url = Uri.parse('$_baseUrl/p_date/$date');
     try {
       final response = await http.get(url);
 
@@ -58,6 +57,13 @@ class Sale {
       print('Error de conexión: $e');
       return false;
     }
+  }
+
+  Future<List<List<dynamic>>> getTotal(String date) async {
+    Product product = Product();
+    List<dynamic> sales = await getSales(date);
+    List<dynamic> products = await product.getProducts(false, '');
+    return [sales, products];
   }
 
   List<String> getDetails(List<dynamic> products, String id, String quantity) {

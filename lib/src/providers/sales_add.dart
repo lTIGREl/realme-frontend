@@ -5,6 +5,15 @@ class SelectedItemSale with ChangeNotifier {
   String _mode = 'Efectivo';
   int _quantity = 1;
   String _costumer = '';
+  DateTime _date = DateTime.now();
+  //DateFormat('yyyy-MM-dd', 'es_MX').format(DateTime.now());
+
+  DateTime get date => _date;
+
+  set date(DateTime date) {
+    _date = date;
+    notifyListeners();
+  }
 
   String get mode => _mode;
 

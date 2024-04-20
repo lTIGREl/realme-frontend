@@ -1,6 +1,7 @@
 // ignore_for_file: prefer_const_constructors, sort_child_properties_last, prefer_const_literals_to_create_immutables, prefer_const_constructors_in_immutables, use_build_context_synchronously
 
 import 'package:flutter/material.dart';
+import 'package:flutter_datetime_picker/flutter_datetime_picker.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
@@ -21,40 +22,40 @@ class _SalesPageState extends State<SalesPage> {
   int _currentPage = 0;
   @override
   Widget build(BuildContext context) {
-    initializeDateFormatting('es_MX');
-    String date = DateFormat('d MMMM y', 'es_MX').format(DateTime.now());
-    return Scaffold(
-        body: SafeArea(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          SizedBox(
-            width: double.infinity,
-            height: 50,
-          ),
-          _Header(
-            date: date,
-            leftArrow: _leftButton,
-            rightArrow: _rightButton,
-          ),
-          Expanded(
-            child: PageView(
-              controller: _pageController,
-              onPageChanged: (page) => _currentPage = page,
-              physics: BouncingScrollPhysics(),
-              children: [
-                _SalesSummary(
-                  detailsButton: _detailsButton,
-                  newSaleButton: _newSaleButton,
-                ),
-                _NewSale(),
-                _SalesDetails()
-              ],
+    return ChangeNotifierProvider(
+      create: (context) => SelectedItemSale(),
+      child: Scaffold(
+          body: SafeArea(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            SizedBox(
+              width: double.infinity,
+              height: 50,
             ),
-          ),
-        ],
-      ),
-    ));
+            _Header(
+              leftArrow: _leftButton,
+              rightArrow: _rightButton,
+            ),
+            Expanded(
+              child: PageView(
+                controller: _pageController,
+                onPageChanged: (page) => _currentPage = page,
+                physics: BouncingScrollPhysics(),
+                children: [
+                  _SalesSummary(
+                    detailsButton: _detailsButton,
+                    newSaleButton: _newSaleButton,
+                  ),
+                  _NewSale(),
+                  _SalesDetails()
+                ],
+              ),
+            ),
+          ],
+        ),
+      )),
+    );
   }
 
   _detailsButton() {
@@ -185,68 +186,60 @@ class _CustomerData extends StatelessWidget {
   Client client = Client();
   @override
   Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text('Cliente'),
-        SizedBox(
-          width: 150,
-          height: 75,
-          child: FutureBuilder(
-              future: client.getClients(false, '', ''),
-              builder: (BuildContext context,
-                  AsyncSnapshot<List<dynamic>> snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return Center(child: CircularProgressIndicator());
-                } else if (snapshot.hasError) {
-                  return Text('Error: ${snapshot.error}');
-                } else {
-                  List<Map<String, String>> datos = (snapshot.data!)
-                      .map((item) => (item as Map<String, dynamic>).map(
-                          (key, value) =>
-                              MapEntry(key.toString(), value.toString())))
-                      .toList();
-                  List<String> names =
-                      datos.map((item) => item['name'] as String).toList();
-                  return Autocomplete<String>(
-                    optionsBuilder: (TextEditingValue textEditingValue) {
-                      if (textEditingValue.text == '') {
-                        return const Iterable<String>.empty();
-                      }
-                      return names.where((String option) {
-                        return option.contains(textEditingValue.text);
-                      });
-                    },
-                    onSelected: (String selection) {
-                      _clientController.text = selection;
-                    },
-                    fieldViewBuilder: (BuildContext context,
-                        TextEditingController textEditingController,
-                        FocusNode focusNode,
-                        VoidCallback onFieldSubmitted) {
-                      _clientController.value = textEditingController.value;
-                      return TextField(
-                        textCapitalization: TextCapitalization.words,
-                        controller: textEditingController,
-                        focusNode: focusNode,
-                        onSubmitted: (String value) {
-                          onFieldSubmitted();
-                        },
-                        style: TextStyle(
-                          fontSize: 16.0,
-                        ),
-                        decoration: InputDecoration(
-                          border: OutlineInputBorder(),
-                          hintText: 'Nombre',
-                        ),
-                      );
-                    },
-                  );
-                }
-              }),
-        ),
-      ],
-    );
+    return FutureBuilder(
+        future: client.getClients(false, '', ''),
+        builder: (BuildContext context, AsyncSnapshot<List<dynamic>> snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return Center(child: Center(child: CircularProgressIndicator()));
+          } else if (snapshot.hasError) {
+            return Text('Error: ${snapshot.error}');
+          } else {
+            List<Map<String, String>> datos = (snapshot.data!)
+                .map((item) => (item as Map<String, dynamic>).map(
+                    (key, value) => MapEntry(key.toString(), value.toString())))
+                .toList();
+            List<String> names =
+                datos.map((item) => item['name'] as String).toList();
+            return Autocomplete<String>(
+                optionsBuilder: (TextEditingValue textEditingValue) {
+              if (textEditingValue.text == '') {
+                return const Iterable<String>.empty();
+              }
+              return names.where((String option) {
+                return option.contains(textEditingValue.text);
+              });
+            }, onSelected: (String selection) {
+              _clientController.text = selection;
+            }, fieldViewBuilder: (BuildContext context,
+                    TextEditingController textEditingController,
+                    FocusNode focusNode,
+                    VoidCallback onFieldSubmitted) {
+              _clientController.value = textEditingController.value;
+              return Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('Cliente'),
+                    SizedBox(
+                        width: 150,
+                        height: 75,
+                        child: TextField(
+                            textCapitalization: TextCapitalization.words,
+                            controller: textEditingController,
+                            focusNode: focusNode,
+                            onSubmitted: (String value) {
+                              onFieldSubmitted();
+                            },
+                            style: TextStyle(
+                              fontSize: 16.0,
+                            ),
+                            decoration: InputDecoration(
+                              border: OutlineInputBorder(),
+                              hintText: 'Nombre',
+                            )))
+                  ]);
+            });
+          }
+        });
   }
 }
 
@@ -309,15 +302,13 @@ class _DropDownButton extends StatelessWidget {
     Product product = Product();
     return isProduct
         ? FutureBuilder(
-            future: product.getProducts(
-                false, ''), // Función que retorna un Future<String>
+            future: product.getProducts(false, ''),
             builder:
                 (BuildContext context, AsyncSnapshot<List<dynamic>> snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
-                return CircularProgressIndicator(); // Muestra un indicador de carga mientras se espera la respuesta
+                return Center(child: CircularProgressIndicator());
               } else if (snapshot.hasError) {
-                return Text(
-                    'Error: ${snapshot.error}'); // Muestra un mensaje de error si hay algún error
+                return Text('Error: ${snapshot.error}');
               } else {
                 List<Map<String, String>> datos = (snapshot.data!)
                     .map((item) => (item as Map<String, dynamic>).map(
@@ -441,109 +432,94 @@ class _SliverBody extends StatelessWidget {
   Sale sale = Sale();
   @override
   Widget build(BuildContext context) {
-    return Container(
-        height: 600,
+    final width = MediaQuery.of(context).size.width;
+    final height = MediaQuery.of(context).size.height;
+    String date = DateFormat('yyyy-MM-dd', 'es_MX')
+        .format(Provider.of<SelectedItemSale>(context).date)
+        .toString();
+    return SizedBox(
+        height: height * 0.7,
         child: FutureBuilder(
-          future: sale.getSales(),
-          builder:
-              (BuildContext context, AsyncSnapshot<List<dynamic>> snapshot) {
+          future: sale.getTotal(date),
+          builder: (BuildContext context,
+              AsyncSnapshot<List<List<dynamic>>> snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
-              return CircularProgressIndicator();
+              return Center(child: CircularProgressIndicator());
             } else if (snapshot.hasError) {
               return Text('Error: ${snapshot.error}');
             } else {
-              List<Map<String, String>> datos = (snapshot.data!)
+              List<Map<String, String>> sales = (snapshot.data![0])
                   .map((item) => (item as Map<String, dynamic>).map(
                       (key, value) =>
                           MapEntry(key.toString(), value.toString())))
                   .toList();
-              return Details(
-                data: datos,
-                sale: sale,
-              );
+              List<Map<String, String>> products = (snapshot.data![1])
+                  .map((item) => (item as Map<String, dynamic>).map(
+                      (key, value) =>
+                          MapEntry(key.toString(), value.toString())))
+                  .toList();
+              List<String> names = [];
+              List<String> prices = [];
+              for (var sale in sales) {
+                var quantity = sale['quantity'];
+                var productId = sale['product_id'];
+                var product = products.firstWhere(
+                    (product) => product['id'] == productId,
+                    orElse: () => {});
+                var name = product['name'] ?? 'N/A';
+                var price = product['price'] ?? 'N/A';
+                names.add(name);
+                prices.add(
+                    (double.parse(price) * double.parse(quantity!)).toString());
+              }
+              return ListView.builder(
+                  itemCount: sales.length,
+                  itemBuilder: (context, index) {
+                    return Card(
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.all(Radius.circular(20))),
+                      child: Container(
+                        padding: EdgeInsets.symmetric(horizontal: 16),
+                        height: 75,
+                        child: SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: Row(
+                            children: [
+                              Container(
+                                  alignment: Alignment.center,
+                                  child: Text(sales[index]['quantity']!),
+                                  width: width * 0.05),
+                              Container(
+                                  alignment: Alignment.center,
+                                  child: Text(names[index]),
+                                  width: width * 0.25),
+                              Container(
+                                  alignment: Alignment.center,
+                                  child: Text(
+                                      translateMethod(sales[index]['method']!)),
+                                  width: width * 0.2),
+                              Container(
+                                  alignment: Alignment.center,
+                                  child: Text(prices[index]),
+                                  width: width * 0.125),
+                              Container(
+                                  alignment: Alignment.center,
+                                  child: Text(sales[index]['client_name']!),
+                                  width: width * 0.25),
+                              Container(
+                                  alignment: Alignment.center,
+                                  child: Text(sales[index]['debt']!),
+                                  width: width * 0.125)
+                            ],
+                          ),
+                        ),
+                      ),
+                      elevation: 0,
+                    );
+                  });
             }
           },
         ));
-  }
-}
-
-class Details extends StatelessWidget {
-  const Details({
-    Key? key,
-    required this.data,
-    required this.sale,
-  }) : super(key: key);
-
-  final List<Map<String, String>> data;
-  final Sale sale;
-
-  @override
-  Widget build(BuildContext context) {
-    final width = MediaQuery.of(context).size.width;
-    final height = MediaQuery.of(context).size.height;
-    Product product = Product();
-    return FutureBuilder(
-      future: product.getProducts(false, ''),
-      builder: (BuildContext context, AsyncSnapshot<List<dynamic>> snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return Center(child: CircularProgressIndicator());
-        } else if (snapshot.hasError) {
-          return Center(child: Text('Error al cargar datos'));
-        } else {
-          List<Map<String, String>> products = (snapshot.data!)
-              .map((item) => (item as Map<String, dynamic>).map(
-                  (key, value) => MapEntry(key.toString(), value.toString())))
-              .toList();
-          return ListView.builder(
-              itemCount: data.length,
-              itemBuilder: (context, index) {
-                List<String> details = sale.getDetails(products,
-                    data[index]['product_id']!, data[index]['quantity']!);
-                return Card(
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.all(Radius.circular(20))),
-                  child: Container(
-                    padding: EdgeInsets.symmetric(horizontal: 16),
-                    height: 75,
-                    child: SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: Row(
-                        children: [
-                          Container(
-                              alignment: Alignment.center,
-                              child: Text(data[index]['quantity']!),
-                              width: width * 0.05),
-                          Container(
-                              alignment: Alignment.center,
-                              child: Text(details[0]),
-                              width: width * 0.25),
-                          Container(
-                              alignment: Alignment.center,
-                              child:
-                                  Text(translateMethod(data[index]['method']!)),
-                              width: width * 0.2),
-                          Container(
-                              alignment: Alignment.center,
-                              child: Text(details[1]),
-                              width: width * 0.125),
-                          Container(
-                              alignment: Alignment.center,
-                              child: Text(data[index]['client_name']!),
-                              width: width * 0.25),
-                          Container(
-                              alignment: Alignment.center,
-                              child: Text(data[index]['debt']!),
-                              width: width * 0.125)
-                        ],
-                      ),
-                    ),
-                  ),
-                  elevation: 0,
-                );
-              });
-        }
-      },
-    );
   }
 
   String translateMethod(String method) {
@@ -635,6 +611,70 @@ class _SalesSummary extends StatelessWidget {
       {required this.detailsButton, required this.newSaleButton});
   @override
   Widget build(BuildContext context) {
+    Sale sale = Sale();
+    double total = 0.0;
+    String date = DateFormat('yyyy-MM-dd', 'es_MX')
+        .format(Provider.of<SelectedItemSale>(context).date)
+        .toString();
+    return FutureBuilder(
+      future: sale.getTotal(date),
+      builder:
+          (BuildContext context, AsyncSnapshot<List<List<dynamic>>> snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Center(child: CircularProgressIndicator());
+        } else if (snapshot.hasError) {
+          return Text('Error: ${snapshot.error}');
+        } else {
+          List<Map<String, String>> sales = (snapshot.data![0])
+              .map((item) => (item as Map<String, dynamic>).map(
+                  (key, value) => MapEntry(key.toString(), value.toString())))
+              .toList();
+          List<Map<String, String>> products = (snapshot.data![1])
+              .map((item) => (item as Map<String, dynamic>).map(
+                  (key, value) => MapEntry(key.toString(), value.toString())))
+              .toList();
+          List<String> names = [];
+          List<String> prices = [];
+          for (var sale in sales) {
+            var quantity = sale['quantity'];
+            var productId = sale['product_id'];
+            var product = products.firstWhere(
+                (product) => product['id'] == productId,
+                orElse: () => {});
+            var name = product['name'] ?? 'N/A';
+            var price = product['price'] ?? 'N/A';
+            names.add(name);
+            prices.add(
+                (double.parse(price) * double.parse(quantity!)).toString());
+          }
+          for (var price in prices) {
+            total += double.parse(price);
+          }
+          print(total);
+          return Summary(
+              total: total,
+              detailsButton: detailsButton,
+              newSaleButton: newSaleButton);
+        }
+      },
+    );
+  }
+}
+
+class Summary extends StatelessWidget {
+  const Summary({
+    Key? key,
+    required this.total,
+    required this.detailsButton,
+    required this.newSaleButton,
+  }) : super(key: key);
+
+  final double total;
+  final Function detailsButton;
+  final Function newSaleButton;
+
+  @override
+  Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.all(30.0),
       child: RadialProgress(
@@ -645,7 +685,7 @@ class _SalesSummary extends StatelessWidget {
                 width: double.infinity,
               ),
               Text(
-                '\$125.25',
+                total.toString(),
                 style: TextStyle(fontSize: 40, color: Colors.blue),
               ),
               Text('Ventas totales', style: TextStyle(fontSize: 20)),
@@ -679,11 +719,13 @@ class _SalesSummary extends StatelessWidget {
 class _Header extends StatelessWidget {
   final Function leftArrow;
   final Function rightArrow;
-  final String date;
-  const _Header(
-      {required this.date, required this.leftArrow, required this.rightArrow});
+  late String date;
+  _Header({required this.leftArrow, required this.rightArrow});
   @override
   Widget build(BuildContext context) {
+    initializeDateFormatting('es_MX');
+    date = DateFormat('d MMMM y', 'es_MX')
+        .format(Provider.of<SelectedItemSale>(context).date);
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
@@ -691,14 +733,31 @@ class _Header extends StatelessWidget {
           onPressed: () => leftArrow(),
           icon: Icon(Icons.arrow_back_ios),
         ),
-        Column(
-          children: [
-            Text('Hoy',
-                style: TextStyle(
-                  fontSize: 40,
-                )),
-            Text(date),
-          ],
+        GestureDetector(
+          onTap: () {
+            DatePicker.showDatePicker(
+              context,
+              showTitleActions: true,
+              minTime: DateTime(2023),
+              maxTime: DateTime(2030),
+              onConfirm: (date) {
+                Provider.of<SelectedItemSale>(context, listen: false).date =
+                    date;
+              },
+              currentTime:
+                  Provider.of<SelectedItemSale>(context, listen: false).date,
+              locale: LocaleType.es,
+            );
+          },
+          child: Column(
+            children: [
+              Text('Hoy',
+                  style: TextStyle(
+                    fontSize: 40,
+                  )),
+              Text(date),
+            ],
+          ),
         ),
         IconButton(
           onPressed: () => rightArrow(),
