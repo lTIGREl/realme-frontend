@@ -1,5 +1,4 @@
 // ignore_for_file: prefer_const_constructors, sort_child_properties_last, prefer_const_literals_to_create_immutables, prefer_const_constructors_in_immutables, use_build_context_synchronously
-
 import 'package:flutter/material.dart';
 import 'package:flutter_datetime_picker/flutter_datetime_picker.dart';
 import 'package:intl/date_symbol_data_local.dart';
@@ -9,7 +8,6 @@ import 'package:real_me_fitness_center/src/models/client.dart';
 import 'package:real_me_fitness_center/src/models/product.dart';
 import 'package:real_me_fitness_center/src/models/sale.dart';
 import 'package:real_me_fitness_center/src/providers/sales_add.dart';
-
 import '../widgets/radial_progress.dart';
 
 class SalesPage extends StatefulWidget {
