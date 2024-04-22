@@ -6,7 +6,6 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:real_me_fitness_center/src/models/client.dart';
 import 'package:real_me_fitness_center/src/pages/edit_client_page.dart';
-import 'package:real_me_fitness_center/src/pages/insertclient_page.dart';
 import 'package:real_me_fitness_center/src/providers/search.dart';
 
 class ClientsPage extends StatelessWidget {
@@ -24,16 +23,12 @@ class ClientsPage extends StatelessWidget {
           top: 0,
           right: 0,
           child: SafeArea(
-            child: IconButton(
-                onPressed: () {
-                  openDialogCreate(context);
-                },
-                icon: FaIcon(
-                  FontAwesomeIcons.plus,
-                  size: 30,
-                  color: Colors.white,
-                )),
-          ))
+              child: IconButton(
+                  onPressed: () {
+                    openDialogCreate(context);
+                  },
+                  icon: FaIcon(FontAwesomeIcons.plus,
+                      size: 30, color: Colors.white))))
     ]));
   }
 
@@ -41,12 +36,110 @@ class ClientsPage extends StatelessWidget {
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        return AlertDialog(
-            title: Text('Nuevo cliente'),
-            content:
-                SizedBox(height: 400, width: 200, child: InsertClientPage()));
+        return CreateDialogClient();
       },
     );
+  }
+}
+
+class CreateDialogClient extends StatefulWidget {
+  const CreateDialogClient({
+    Key? key,
+  }) : super(key: key);
+
+  @override
+  State<CreateDialogClient> createState() => _CreateDialogClientState();
+}
+
+class _CreateDialogClientState extends State<CreateDialogClient> {
+  final GlobalKey<FormState> formKey = GlobalKey<FormState>();
+  String nombre = '';
+  String cedula = '';
+  String fecha = '';
+  bool _isLoading = false;
+  @override
+  Widget build(BuildContext context) {
+    return Stack(children: [
+      AlertDialog(
+          title: Text('Nuevo cliente'),
+          content: SizedBox(
+              height: 400,
+              width: 200,
+              child: ListView(children: [
+                SizedBox(
+                    height: 400,
+                    child: Form(
+                        key: formKey,
+                        child: Column(
+                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                            children: [
+                              Icon(Icons.person, size: 60),
+                              TextFormField(
+                                validator: ((value) => (value!.isEmpty)
+                                    ? 'Ingrese el nombre'
+                                    : null),
+                                onSaved: (value) => nombre = value!,
+                                decoration: InputDecoration(
+                                    border: OutlineInputBorder(),
+                                    labelText: 'Nombre',
+                                    hintText: 'Cliente',
+                                    prefixIcon: Icon(Icons.person)),
+                              ),
+                              TextFormField(
+                                  validator: ((value) => (value!.isEmpty)
+                                      ? 'Ingrese la cedula'
+                                      : null),
+                                  onSaved: (value) => cedula = value!,
+                                  keyboardType: TextInputType.number,
+                                  decoration: InputDecoration(
+                                      border: OutlineInputBorder(),
+                                      labelText: 'Cédula',
+                                      hintText: 'CI',
+                                      prefixIcon:
+                                          Icon(Icons.document_scanner))),
+                              TextFormField(
+                                  validator: ((value) => (value!.isEmpty)
+                                      ? 'Ingrese la fecha'
+                                      : null),
+                                  onSaved: (value) => fecha = value!,
+                                  keyboardType: TextInputType.number,
+                                  decoration: InputDecoration(
+                                      border: OutlineInputBorder(),
+                                      labelText: 'Fecha de nacimiento',
+                                      hintText: 'Fecha',
+                                      prefixIcon: Icon(Icons.date_range))),
+                              ElevatedButton(
+                                  child: const Text('Registrar'),
+                                  onPressed: () async {
+                                    if (formKey.currentState!.validate()) {
+                                      formKey.currentState!.save();
+                                      Client client = Client(data: {
+                                        'id': '0',
+                                        'name': nombre,
+                                        'ic': cedula,
+                                        'BDate': fecha
+                                      });
+                                      setState(() => _isLoading = true);
+                                      bool isCorrect =
+                                          await client.postClient();
+                                      isCorrect
+                                          ? Navigator.pop(context)
+                                          : setState(() {
+                                              _isLoading = false;
+                                              ScaffoldMessenger.of(context)
+                                                  .showSnackBar(SnackBar(
+                                                      content: const Text(
+                                                          'Ocurrió un error')));
+                                            });
+                                    }
+                                  })
+                            ])))
+              ]))),
+      if (_isLoading)
+        Container(
+            color: Colors.black.withOpacity(0.5),
+            child: Center(child: CircularProgressIndicator()))
+    ]);
   }
 }
 

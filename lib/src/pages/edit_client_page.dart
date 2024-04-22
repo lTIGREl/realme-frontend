@@ -8,7 +8,7 @@ import 'package:real_me_fitness_center/src/providers/delete.dart';
 import 'package:real_me_fitness_center/src/providers/membership.dart';
 import '../models/client.dart';
 
-class EditDialog extends StatelessWidget {
+class EditDialog extends StatefulWidget {
   EditDialog({
     required this.client,
     required this.nameCtrl,
@@ -20,68 +20,77 @@ class EditDialog extends StatelessWidget {
   final TextEditingController nameCtrl;
   final TextEditingController icCtrl;
   final TextEditingController bDateCtrl;
+
+  @override
+  State<EditDialog> createState() => _EditDialogState();
+}
+
+class _EditDialogState extends State<EditDialog> {
   late bool delete;
+  bool _isLoading = false;
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      title: Text(client.name),
-      content: SingleChildScrollView(
-        child: SizedBox(
-          height: 400,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              TextFormField(
-                  controller: nameCtrl,
-                  decoration: InputDecoration(
-                    border: OutlineInputBorder(),
-                    label: Text('Nombre'),
-                  ),
-                  maxLines: null),
-              TextFormField(
-                  controller: icCtrl,
-                  decoration: InputDecoration(
-                    border: OutlineInputBorder(),
-                    label: Text('Cédula'),
-                  ),
-                  maxLines: null),
-              TextFormField(
-                  controller: bDateCtrl,
-                  decoration: InputDecoration(
-                    border: OutlineInputBorder(),
-                    label: Text('Fecha de Nacimiento'),
-                  ),
-                  maxLines: null)
-            ],
-          ),
-        ),
-      ),
-      actions: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [
-            ChangeNotifierProvider(
-              create: ((context) => DeleteOption()),
-              child: Builder(builder: (context) {
-                delete = Provider.of<DeleteOption>(context).needDelete;
-                return delete ? ConfirmButton(client: client) : DeleteButton();
-              }),
-            ),
-            TextButton(
-              onPressed: () async {
-                client.name = nameCtrl.text;
-                client.ic = icCtrl.text;
-                client.BDate = bDateCtrl.text;
-
-                bool isCorrect = await client.postClient();
-                isCorrect ? Navigator.pop(context) : null;
-              },
-              child: Text('Guardar'),
-            ),
-          ],
-        )
-      ],
-    );
+    return Stack(children: [
+      AlertDialog(
+          title: Text(widget.client.name),
+          content: SingleChildScrollView(
+              child: SizedBox(
+                  height: 400,
+                  child: Column(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        TextFormField(
+                            controller: widget.nameCtrl,
+                            decoration: InputDecoration(
+                                border: OutlineInputBorder(),
+                                label: Text('Nombre')),
+                            maxLines: null),
+                        TextFormField(
+                            controller: widget.icCtrl,
+                            decoration: InputDecoration(
+                                border: OutlineInputBorder(),
+                                label: Text('Cédula')),
+                            maxLines: null),
+                        TextFormField(
+                            controller: widget.bDateCtrl,
+                            decoration: InputDecoration(
+                                border: OutlineInputBorder(),
+                                label: Text('Fecha de Nacimiento')),
+                            maxLines: null)
+                      ]))),
+          actions: [
+            Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
+              ChangeNotifierProvider(
+                  create: ((context) => DeleteOption()),
+                  child: Builder(builder: (context) {
+                    delete = Provider.of<DeleteOption>(context).needDelete;
+                    return delete
+                        ? ConfirmButton(client: widget.client)
+                        : DeleteButton();
+                  })),
+              TextButton(
+                  onPressed: () async {
+                    widget.client.name = widget.nameCtrl.text;
+                    widget.client.ic = widget.icCtrl.text;
+                    widget.client.BDate = widget.bDateCtrl.text;
+                    setState(() => _isLoading = true);
+                    bool isCorrect = await widget.client.postClient();
+                    isCorrect
+                        ? Navigator.pop(context)
+                        : setState(() {
+                            _isLoading = false;
+                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                                content: const Text('Ocurrió un error')));
+                          });
+                  },
+                  child: Text('Guardar'))
+            ])
+          ]),
+      if (_isLoading)
+        Container(
+            color: Colors.black.withOpacity(0.5),
+            child: Center(child: CircularProgressIndicator()))
+    ]);
   }
 }
 
@@ -91,8 +100,6 @@ class DeleteButton extends StatelessWidget {
     return TextButton(
       onPressed: () async {
         Provider.of<DeleteOption>(context, listen: false).needDelete = true;
-        // bool isCorrect = await client.deleteClient();
-        // isCorrect ? Navigator.pop(context) : null;
       },
       child: Text('Eliminar'),
     );
@@ -121,15 +128,21 @@ class ConfirmButton extends StatelessWidget {
   }
 }
 
-class MembershipDialog extends StatelessWidget {
+class MembershipDialog extends StatefulWidget {
   const MembershipDialog({required this.client});
 
   final Client client;
 
   @override
+  State<MembershipDialog> createState() => _MembershipDialogState();
+}
+
+class _MembershipDialogState extends State<MembershipDialog> {
+  bool _isLoading = false;
+  bool _isCompleted = false;
+  @override
   Widget build(BuildContext context) {
-    bool _isCompleted = false;
-    Membership membership = Membership(id: client.id);
+    Membership membership = Membership(id: widget.client.id);
     return ChangeNotifierProvider(
         create: (context) => SelectedDateModel(),
         child: FutureBuilder(
@@ -168,94 +181,116 @@ class MembershipDialog extends StatelessWidget {
                 _isCompleted = true;
               });
 
-              return AlertDialog(
-                title: SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.circle,
-                        color: validateDate(DateTime.now(),
-                                DateTime.parse(datos['end_date']))
-                            ? Colors.green
-                            : Colors.red,
-                        size: 20,
+              return Stack(
+                children: [
+                  AlertDialog(
+                    title: SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.circle,
+                            color: validateDate(DateTime.now(),
+                                    DateTime.parse(datos['end_date']))
+                                ? Colors.green
+                                : Colors.red,
+                            size: 20,
+                          ),
+                          Text(widget.client.name)
+                        ],
                       ),
-                      Text(client.name)
+                    ),
+                    content: SingleChildScrollView(
+                      child: SizedBox(
+                        height: 100,
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: [
+                            Row(
+                              children: [
+                                Text(
+                                    'Desde: ${iDate.toString().substring(0, 10)}'),
+                                IconButton(
+                                    onPressed: () {
+                                      DatePicker.showDatePicker(
+                                        context,
+                                        showTitleActions: true,
+                                        minTime: DateTime(2024),
+                                        maxTime: DateTime(2030),
+                                        onConfirm: (date) {
+                                          Provider.of<SelectedDateModel>(
+                                                  context,
+                                                  listen: false)
+                                              .iDate = date;
+                                        },
+                                        currentTime: iDate,
+                                        locale: LocaleType.es,
+                                      );
+                                    },
+                                    icon: Icon(Icons.edit)),
+                              ],
+                            ),
+                            Row(
+                              children: [
+                                Text(
+                                    'Hasta: ${fDate.toString().substring(0, 10)}'),
+                                IconButton(
+                                    onPressed: () {
+                                      DatePicker.showDatePicker(
+                                        context,
+                                        showTitleActions: true,
+                                        minTime: DateTime(2024),
+                                        maxTime: DateTime(2030),
+                                        onConfirm: (date) {
+                                          Provider.of<SelectedDateModel>(
+                                                  context,
+                                                  listen: false)
+                                              .fDate = date;
+                                        },
+                                        currentTime: fDate,
+                                        locale: LocaleType.es,
+                                      );
+                                    },
+                                    icon: Icon(Icons.edit)),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: validateDate(iDate, fDate)
+                            ? () async {
+                                Membership membresia = Membership(
+                                    id: datos['id']!,
+                                    client_id: widget.client.id,
+                                    iDate: iDate.toString(),
+                                    fDate: fDate.toString());
+                                setState(() => _isLoading = true);
+                                bool isCorrect =
+                                    await membresia.postMembership();
+                                isCorrect
+                                    ? Navigator.pop(context)
+                                    : setState(() {
+                                        _isLoading = false;
+                                        ScaffoldMessenger.of(context)
+                                            .showSnackBar(SnackBar(
+                                                content: const Text(
+                                                    'Ocurrió un error')));
+                                      });
+                              }
+                            : null,
+                        child: Text('Guardar'),
+                      ),
                     ],
                   ),
-                ),
-                content: SingleChildScrollView(
-                  child: SizedBox(
-                    height: 100,
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        Row(
-                          children: [
-                            Text('Desde: ${iDate.toString().substring(0, 10)}'),
-                            IconButton(
-                                onPressed: () {
-                                  DatePicker.showDatePicker(
-                                    context,
-                                    showTitleActions: true,
-                                    minTime: DateTime(2024),
-                                    maxTime: DateTime(2030),
-                                    onConfirm: (date) {
-                                      Provider.of<SelectedDateModel>(context,
-                                              listen: false)
-                                          .iDate = date;
-                                    },
-                                    currentTime: iDate,
-                                    locale: LocaleType.es,
-                                  );
-                                },
-                                icon: Icon(Icons.edit)),
-                          ],
-                        ),
-                        Row(
-                          children: [
-                            Text('Hasta: ${fDate.toString().substring(0, 10)}'),
-                            IconButton(
-                                onPressed: () {
-                                  DatePicker.showDatePicker(
-                                    context,
-                                    showTitleActions: true,
-                                    minTime: DateTime(2024),
-                                    maxTime: DateTime(2030),
-                                    onConfirm: (date) {
-                                      Provider.of<SelectedDateModel>(context,
-                                              listen: false)
-                                          .fDate = date;
-                                    },
-                                    currentTime: fDate,
-                                    locale: LocaleType.es,
-                                  );
-                                },
-                                icon: Icon(Icons.edit)),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                actions: [
-                  TextButton(
-                    onPressed: validateDate(iDate, fDate)
-                        ? () async {
-                            Membership membresia = Membership(
-                                id: datos['id']!,
-                                client_id: client.id,
-                                iDate: iDate.toString(),
-                                fDate: fDate.toString());
-                            bool isCorrect = await membresia.postMembership();
-                            isCorrect ? Navigator.pop(context) : null;
-                          }
-                        : null,
-                    child: Text('Guardar'),
-                  ),
+                  if (_isLoading)
+                    Container(
+                        color: Colors.black.withOpacity(0.5),
+                        child: Center(child: CircularProgressIndicator()))
                 ],
               );
             }

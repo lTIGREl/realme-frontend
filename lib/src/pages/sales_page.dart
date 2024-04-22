@@ -10,50 +10,33 @@ import 'package:real_me_fitness_center/src/models/sale.dart';
 import 'package:real_me_fitness_center/src/providers/sales_add.dart';
 import '../widgets/radial_progress.dart';
 
-class SalesPage extends StatefulWidget {
-  @override
-  State<SalesPage> createState() => _SalesPageState();
-}
-
-class _SalesPageState extends State<SalesPage> {
+class SalesPage extends StatelessWidget {
   final PageController _pageController = PageController();
   int _currentPage = 0;
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (context) => SelectedItemSale(),
-      child: Scaffold(
-          body: SafeArea(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            SizedBox(
-              width: double.infinity,
-              height: 50,
-            ),
-            _Header(
-              leftArrow: _leftButton,
-              rightArrow: _rightButton,
-            ),
-            Expanded(
-              child: PageView(
-                controller: _pageController,
-                onPageChanged: (page) => _currentPage = page,
-                physics: BouncingScrollPhysics(),
-                children: [
-                  _SalesSummary(
-                    detailsButton: _detailsButton,
-                    newSaleButton: _newSaleButton,
-                  ),
-                  _NewSale(),
-                  _SalesDetails()
-                ],
-              ),
-            ),
-          ],
-        ),
-      )),
-    );
+        create: (context) => SelectedItemSale(),
+        child: Scaffold(
+            body: SafeArea(
+                child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+              SizedBox(width: double.infinity, height: 50),
+              _Header(leftArrow: _leftButton, rightArrow: _rightButton),
+              Expanded(
+                  child: PageView(
+                      controller: _pageController,
+                      onPageChanged: (page) => _currentPage = page,
+                      physics: BouncingScrollPhysics(),
+                      children: [
+                    _SalesSummary(
+                        detailsButton: _detailsButton,
+                        newSaleButton: _newSaleButton),
+                    _NewSale(),
+                    _SalesDetails()
+                  ]))
+            ]))));
   }
 
   _detailsButton() {
@@ -81,73 +64,72 @@ class _SalesPageState extends State<SalesPage> {
   }
 }
 
-class _NewSale extends StatelessWidget {
+class _NewSale extends StatefulWidget {
+  @override
+  State<_NewSale> createState() => _NewSaleState();
+}
+
+class _NewSaleState extends State<_NewSale> {
+  bool _isLoading = false;
   final TextEditingController _qtyController = TextEditingController();
   final TextEditingController _productController = TextEditingController();
   final TextEditingController _payController = TextEditingController();
   final TextEditingController _clientController = TextEditingController();
   final TextEditingController _debtController = TextEditingController();
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(20.0),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: [
-          _QuantityControl(_qtyController),
-          _DropDownButton(
-              label: 'Producto',
-              isProduct: true,
-              controller: _productController),
-          _DropDownButton(
-              label: 'Pago', isProduct: false, controller: _payController),
-          _CustomerData(_clientController),
-          _DebtData(_debtController),
-          _SendButton(
-              clientController: _clientController,
-              debtController: _debtController,
-              qtyController: _qtyController,
-              productController: _productController,
-              payController: _payController)
-        ],
-      ),
-    );
-  }
-}
-
-class _SendButton extends StatelessWidget {
-  const _SendButton({
-    required TextEditingController clientController,
-    required TextEditingController debtController,
-    required TextEditingController qtyController,
-    required TextEditingController productController,
-    required TextEditingController payController,
-  })  : _clientController = clientController,
-        _qtyController = qtyController,
-        _productController = productController,
-        _payController = payController,
-        _debtController = debtController;
-
-  final TextEditingController _clientController;
-  final TextEditingController _debtController;
-  final TextEditingController _qtyController;
-  final TextEditingController _productController;
-  final TextEditingController _payController;
 
   @override
   Widget build(BuildContext context) {
-    return ElevatedButton(
-        onPressed: () async {
-          Sale sale = Sale();
-          bool isCorrect = await sale.postSale(
-              _qtyController.text,
-              _productController.text,
-              _payController.text,
-              _clientController.text,
-              _debtController.text);
-          isCorrect ? {} : null;
-        },
-        child: Text('Registrar'));
+    final width = MediaQuery.of(context).size.width;
+    final height = MediaQuery.of(context).size.height;
+    return Stack(children: [
+      Padding(
+          padding: const EdgeInsets.all(20.0),
+          child: SingleChildScrollView(
+            child: SizedBox(
+              height: height * 0.7,
+              child: Column(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    _CustomerData(_clientController),
+                    _QuantityControl(_qtyController),
+                    _DropDownButton(
+                        label: 'Producto',
+                        isProduct: true,
+                        controller: _productController),
+                    _DropDownButton(
+                        label: 'Pago',
+                        isProduct: false,
+                        controller: _payController),
+                    _DebtData(_debtController),
+                    ElevatedButton(
+                        onPressed: () async {
+                          Sale sale = Sale();
+                          setState(() => _isLoading = true);
+                          bool isCorrect = await sale.postSale(
+                              _qtyController.text,
+                              _productController.text,
+                              _payController.text,
+                              _clientController.text,
+                              _debtController.text);
+                          isCorrect
+                              ? setState((() => _isLoading = false))
+                              : setState(() {
+                                  _isLoading = false;
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                          content:
+                                              const Text('Ocurrió un error')));
+                                });
+                        },
+                        child: Text('Registrar'))
+                  ]),
+            ),
+          )),
+      if (_isLoading)
+        Container(
+            color: Colors.black.withOpacity(0.5),
+            child: Center(child: CircularProgressIndicator()))
+    ]);
   }
 }
 
@@ -317,12 +299,16 @@ class _DropDownButton extends StatelessWidget {
                     datos.map((item) => item['name'] as String).toList();
                 List<String> ids =
                     datos.map((item) => item['id'] as String).toList();
-                return _DropMenu(
-                    ids: ids,
-                    controller: controller,
-                    label: label,
-                    isProduct: isProduct,
-                    items: names);
+                if (datos.isEmpty) {
+                  return Text('Error');
+                } else {
+                  return _DropMenu(
+                      ids: ids,
+                      controller: controller,
+                      label: label,
+                      isProduct: isProduct,
+                      items: names);
+                }
               }
             },
           )
@@ -648,7 +634,6 @@ class _SalesSummary extends StatelessWidget {
           for (var price in prices) {
             total += double.parse(price);
           }
-          print(total);
           return Summary(
               total: total,
               detailsButton: detailsButton,
