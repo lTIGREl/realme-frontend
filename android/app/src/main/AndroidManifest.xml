@@ -1,7 +1,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.example.real_me_fitness_center">
    <application
-        android:label="real_me_fitness_center"
+        android:label="RealMe Admin"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity
