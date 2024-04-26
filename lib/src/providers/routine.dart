@@ -5,7 +5,8 @@ import 'package:socket_io_client/socket_io_client.dart' as IO;
 class RoutineProvider with ChangeNotifier {
   bool _needRefresh = false;
   bool get needRefresh => _needRefresh;
-  String baseUrl = 'http://192.168.0.5:4000';
+  String baseUrl = 'http://3.17.164.122';
+  //'http://192.168.0.5:4000';
   //'https://realme.up.railway.app';
 
   RoutineProvider() {
