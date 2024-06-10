@@ -4,7 +4,7 @@ class ApiConfig {
 
   ApiConfig._internal();
 
-  String baseUrl = 'http://3.17.164.122/api/';
+  String baseUrl = 'http://3.135.213.77/api/';
   //'http://192.168.0.5:4000/api/';
   //https://realme.up.railway.app/api/
 }
