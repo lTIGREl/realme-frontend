@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
 import 'package:real_me_fitness_center/src/models/routine.dart';
-import 'package:real_me_fitness_center/src/pages/login_page.dart';
 import 'package:real_me_fitness_center/src/providers/routine.dart';
 import 'package:real_me_fitness_center/src/sharedPrefs/loginToken.dart';
 
