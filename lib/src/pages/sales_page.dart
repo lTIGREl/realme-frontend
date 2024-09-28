@@ -18,25 +18,28 @@ class SalesPage extends StatelessWidget {
     return ChangeNotifierProvider(
         create: (context) => SelectedItemSale(),
         child: Scaffold(
+            floatingActionButton: FloatingActionButton(
+                child: Icon(Icons.add),
+                onPressed: () => _toCreateProductPage(context)),
             body: SafeArea(
                 child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-              SizedBox(width: double.infinity, height: 50),
-              _Header(leftArrow: _leftButton, rightArrow: _rightButton),
-              Expanded(
-                  child: PageView(
-                      controller: _pageController,
-                      onPageChanged: (page) => _currentPage = page,
-                      physics: BouncingScrollPhysics(),
-                      children: [
-                    _SalesSummary(
-                        detailsButton: _detailsButton,
-                        newSaleButton: _newSaleButton),
-                    _NewSale(),
-                    _SalesDetails()
-                  ]))
-            ]))));
+                  SizedBox(width: double.infinity, height: 50),
+                  _Header(leftArrow: _leftButton, rightArrow: _rightButton),
+                  Expanded(
+                      child: PageView(
+                          controller: _pageController,
+                          onPageChanged: (page) => _currentPage = page,
+                          physics: BouncingScrollPhysics(),
+                          children: [
+                        _SalesSummary(
+                            detailsButton: _detailsButton,
+                            newSaleButton: _newSaleButton),
+                        _NewSale(),
+                        _SalesDetails()
+                      ]))
+                ]))));
   }
 
   _detailsButton() {
@@ -62,6 +65,10 @@ class SalesPage extends StatelessWidget {
           duration: Duration(milliseconds: 200), curve: Curves.ease);
     }
   }
+}
+
+_toCreateProductPage(BuildContext context) {
+  Navigator.pushNamed(context, 'createProduct');
 }
 
 class _NewSale extends StatefulWidget {
@@ -596,7 +603,8 @@ class _SalesSummary extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     Sale sale = Sale();
-    double total = 0.0;
+    double totalCash = 0.0;
+    double totalTransfer = 0.0;
     String date = DateFormat('yyyy-MM-dd', 'es_MX')
         .format(Provider.of<SelectedItemSale>(context).date)
         .toString();
@@ -627,15 +635,23 @@ class _SalesSummary extends StatelessWidget {
                 orElse: () => {});
             var name = product['name'] ?? 'N/A';
             var price = product['price'] ?? 'N/A';
-            names.add(name);
-            prices.add(
-                (double.parse(price) * double.parse(quantity!)).toString());
+            var debt = sale['debt'] ?? '0';
+            if (sale["method"] != "transfer") {
+              names.add(name);
+              prices.add((double.parse(price) * double.parse(quantity!) -
+                      double.parse(debt))
+                  .toString());
+            } else {
+              totalTransfer += double.parse(price) * double.parse(quantity!) -
+                  double.parse(debt);
+            }
           }
           for (var price in prices) {
-            total += double.parse(price);
+            totalCash += double.parse(price);
           }
           return Summary(
-              total: total,
+              totalCash: totalCash,
+              totalTransfer: totalTransfer,
               detailsButton: detailsButton,
               newSaleButton: newSaleButton);
         }
@@ -647,12 +663,14 @@ class _SalesSummary extends StatelessWidget {
 class Summary extends StatelessWidget {
   const Summary({
     Key? key,
-    required this.total,
+    required this.totalCash,
+    required this.totalTransfer,
     required this.detailsButton,
     required this.newSaleButton,
   }) : super(key: key);
 
-  final double total;
+  final double totalCash;
+  final double totalTransfer;
   final Function detailsButton;
   final Function newSaleButton;
 
@@ -668,10 +686,15 @@ class Summary extends StatelessWidget {
                 width: double.infinity,
               ),
               Text(
-                total.toString(),
+                totalCash.toString(),
                 style: TextStyle(fontSize: 40, color: Colors.blue),
               ),
-              Text('Ventas totales', style: TextStyle(fontSize: 20)),
+              Text('Efectivo en caja', style: TextStyle(fontSize: 20)),
+              Text(
+                totalTransfer.toString(),
+                style: TextStyle(fontSize: 40, color: Colors.blue),
+              ),
+              Text('Transferencias', style: TextStyle(fontSize: 20)),
               ElevatedButton(
                 onPressed: () => detailsButton(),
                 child: Text('Detalles'),

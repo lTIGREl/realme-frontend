@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:real_me_fitness_center/src/pages/create_product_page.dart';
 import 'package:real_me_fitness_center/src/pages/login_page.dart';
 import 'package:real_me_fitness_center/src/pages/main_menu_page.dart';
 
@@ -14,6 +15,7 @@ class MyApp extends StatelessWidget {
       routes: {
         '/': (context) => MainMenuPage(),
         'login': (context) => LogInPage(),
+        'createProduct': (context) => CreateProductPage(),
       },
       debugShowCheckedModeBanner: false,
       title: 'Real Me',
